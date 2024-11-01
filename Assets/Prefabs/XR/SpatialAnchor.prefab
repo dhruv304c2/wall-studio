@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 4970393429591285627}
   - component: {fileID: 3275547946359316164}
   - component: {fileID: 4359387970480601648}
+  - component: {fileID: -7748654193353237771}
   m_Layer: 0
   m_Name: SpatialAnchor
   m_TagString: Untagged
@@ -116,5 +117,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 34e0461a4939d3b4fbdf706bbd80108c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &-7748654193353237771
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5792250199920903829}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fcbf3ea2bd51d3343a04a30afea0331c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

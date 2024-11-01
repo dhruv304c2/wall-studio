@@ -3,7 +3,7 @@ using Zenject;
 
 namespace XR.SpatialAnchors.Installers{
 public class SpatialAnchorInstaller : MonoInstaller<SpatialAnchorInstaller> {
-    [SerializeField] OVRSpatialAnchor spatialAnchoPrefab;
+    [SerializeField] PoolableOVRSpatialAnchor spatialAnchoPrefab;
 
     public override void InstallBindings(){
         Container.BindFactory<OVRSpatialAnchor,SpatialAnchorFactory>().FromComponentInNewPrefab(spatialAnchoPrefab);
