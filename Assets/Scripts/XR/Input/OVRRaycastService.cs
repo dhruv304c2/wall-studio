@@ -10,15 +10,16 @@ public class OVRRaycastService : IOVRRaycastService{
         _maxRayDistance = maxRayDistance;
     }
 
+
     public void SubscribeToControllerRaycastWhileTriggerHeld(Action<OVRRaycastEvent> listener, LayerMask raycastLayerMask){
         Observable
             .EveryUpdate()
-            .Where(_ => OVRInput.Get(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.RTouch))
+            .Where(_ => OVRInput.Get(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.RTouch)) 
             .Subscribe(_ => CheckAndEmitRaycastEvent(listener, raycastLayerMask, OVRInput.Controller.RTouch));
 
         Observable
             .EveryUpdate()
-            .Where(_ => OVRInput.Get(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.LTouch))
+            .Where(_ => !OVRInput.Get(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.RTouch))
             .Subscribe(_ => CheckAndEmitRaycastEvent(listener, raycastLayerMask, OVRInput.Controller.LTouch));
     }
 
@@ -27,13 +28,13 @@ public class OVRRaycastService : IOVRRaycastService{
         Observable
             .EveryUpdate()
             .Where(_ => OVRInput.GetUp(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.RTouch))
-            .Skip(1)
+            .Where(_ => !OVRInput.Get(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.LTouch)) //Ignoring frames when left trigger is still held
             .Subscribe(_ => CheckAndEmitRaycastEvent(listener, raycastLayerMask, OVRInput.Controller.RTouch));
 
         Observable
             .EveryUpdate()
-            .Where(_ => OVRInput.GetUp(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.LTouch))
-            .Skip(1)
+            .Where(_ => OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.LTouch))
+            .Where(_ => !OVRInput.Get(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.RTouch)) //Ignoring frames when right trigger is still held
             .Subscribe(_ => CheckAndEmitRaycastEvent(listener, raycastLayerMask, OVRInput.Controller.LTouch));
     }
 
