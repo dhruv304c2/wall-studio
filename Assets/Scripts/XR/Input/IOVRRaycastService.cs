@@ -3,7 +3,8 @@ using UnityEngine;
 
 namespace XR.Input{
 public interface IOVRRaycastService {
-    public void SubscribeToControllerRaycastObserver(Action<RaycastHit?> listener, LayerMask raycastLayermask);
+    public void SubscribeToControllerRaycastWhileTriggerHeld(Action<OVRRaycastEvent> listener, LayerMask raycastLayermask);
+    public void SubscribeToControllerRaycastWhenTriggerReleased(Action<OVRRaycastEvent> listener, LayerMask raycastLayermase);
 }
 }
 
