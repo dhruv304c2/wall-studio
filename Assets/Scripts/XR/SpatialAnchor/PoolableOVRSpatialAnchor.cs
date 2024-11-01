@@ -25,6 +25,6 @@ public class PoolableOVRSpatialAnchor : MonoBehaviour, IPoolable<IMemoryPool> {
         _pool.Despawn(this);
     }
 
-    public class Pool : MemoryPool<PoolableOVRSpatialAnchor>{
+    public class Pool : MemoryPool<PoolableOVRSpatialAnchor>{ 
     }
 }}

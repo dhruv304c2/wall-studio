@@ -1,6 +1,7 @@
 using UnityEngine;
 using Zenject;
 using XR.Input;
+using UniRx;
 
 namespace XR.SpatialAnchors{
 public class SpatialAnchorPlacementController : MonoBehaviour {
@@ -18,11 +19,17 @@ public class SpatialAnchorPlacementController : MonoBehaviour {
 
         _ovrRaycastService.SubscribeToControllerRaycastWhileTriggerHeld(OnRaycastTriggerHeld, raycastLayerMask);
         _ovrRaycastService.SubscribeToControllerRaycastWhenTriggerReleased(OnRaycastTriggerReleased, raycastLayerMask);
+
+        var cancelInputStrem = Observable
+            .EveryUpdate()
+            .Where(_ => OVRInput.GetDown(OVRInput.Button.Two))
+            .Subscribe(_ => _cancelPlacement = true);
     }
 
     void OnRaycastTriggerReleased(OVRRaycastEvent e){
         if(_cancelPlacement || e.raycastHit == null) {
             HidePreview();
+            _cancelPlacement = false;
             return;
         }
 
@@ -34,6 +41,7 @@ public class SpatialAnchorPlacementController : MonoBehaviour {
         anchor.transform.position = (Vector3)hitPoint;
 
         HidePreview();
+        _cancelPlacement = false;
     }
 
     void OnRaycastTriggerHeld(OVRRaycastEvent e){

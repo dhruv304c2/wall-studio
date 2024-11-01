@@ -26,7 +26,7 @@ public class LineRenderer3D : MonoBehaviour {
 
         transform.position = midpoint;
         transform.LookAt(_endPoint);
-        transform.localScale = new Vector3(lineWidth, lineWidth, distance);
+        transform.localScale = new Vector3(lineWidth, lineWidth, distance * 0.5f);
     }
 
     public void Show(){
