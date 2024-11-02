@@ -5,21 +5,35 @@ using UnityEngine;
 namespace XR.Input{
 public class OVRRaycastService : IOVRRaycastService{
     float _maxRayDistance;
+    bool _canceled = false;
 
     public OVRRaycastService(float maxRayDistance){
         _maxRayDistance = maxRayDistance;
+
+        Observable
+            .EveryUpdate()
+            .Where(_ => OVRInput.GetDown(OVRInput.Button.Two))
+            .Subscribe(_ => _canceled  = true);
     }
 
+    public void SubscribeToControllerRaycastCancel(Action listener){
+        Observable
+            .EveryUpdate()
+            .Where(_ => OVRInput.GetDown(OVRInput.Button.Two))
+            .Subscribe(_ => listener.Invoke());
+    }
 
     public void SubscribeToControllerRaycastWhileTriggerHeld(Action<OVRRaycastEvent> listener, LayerMask raycastLayerMask){
         Observable
             .EveryUpdate()
+            .SkipWhile(_ => _canceled)
             .Where(_ => OVRInput.Get(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.RTouch)) 
             .Subscribe(_ => CheckAndEmitRaycastEvent(listener, raycastLayerMask, OVRInput.Controller.RTouch));
 
         Observable
             .EveryUpdate()
-            .Where(_ => !OVRInput.Get(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.RTouch))
+            .SkipWhile(_ => _canceled)
+            .Where(_ => OVRInput.Get(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.LTouch))
             .Subscribe(_ => CheckAndEmitRaycastEvent(listener, raycastLayerMask, OVRInput.Controller.LTouch));
     }
 
@@ -27,15 +41,21 @@ public class OVRRaycastService : IOVRRaycastService{
     public void SubscribeToControllerRaycastWhenTriggerReleased(Action<OVRRaycastEvent> listener, LayerMask raycastLayerMask){
         Observable
             .EveryUpdate()
+            .SkipWhile(_ => OVRInput.Get(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.LTouch)) //Ignoring frames when left trigger is still held
             .Where(_ => OVRInput.GetUp(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.RTouch))
-            .Where(_ => !OVRInput.Get(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.LTouch)) //Ignoring frames when left trigger is still held
-            .Subscribe(_ => CheckAndEmitRaycastEvent(listener, raycastLayerMask, OVRInput.Controller.RTouch));
+            .Subscribe(_ => {
+                if(!_canceled) CheckAndEmitRaycastEvent(listener, raycastLayerMask, OVRInput.Controller.RTouch);
+                _canceled = false;
+            });
 
         Observable
             .EveryUpdate()
-            .Where(_ => OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.LTouch))
-            .Where(_ => !OVRInput.Get(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.RTouch)) //Ignoring frames when right trigger is still held
-            .Subscribe(_ => CheckAndEmitRaycastEvent(listener, raycastLayerMask, OVRInput.Controller.LTouch));
+            .SkipWhile(_ => OVRInput.Get(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.RTouch)) //Ignoring frames when right trigger is still held
+            .Where(_ => OVRInput.GetUp(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.LTouch))
+            .Subscribe(_ => {
+                if(!_canceled) CheckAndEmitRaycastEvent(listener, raycastLayerMask, OVRInput.Controller.LTouch);
+                _canceled = false;
+            });
     }
 
 

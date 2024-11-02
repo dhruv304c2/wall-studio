@@ -1,10 +1,11 @@
 using UnityEngine;
 using Zenject;
 using XR.Input;
-using UniRx;
+using Cysharp.Threading.Tasks;
+using System;
 
 namespace XR.SpatialAnchors{
-public class SpatialAnchorPlacementController : MonoBehaviour {
+public class SpatialAnchorPlacementController : MonoBehaviour, ISpatialAnchorPlacementController {
     [Inject] PoolableOVRSpatialAnchor.Pool _spatialAnchorPool;
     [Inject] IOVRRaycastService _ovrRaycastService;
 
@@ -12,24 +13,33 @@ public class SpatialAnchorPlacementController : MonoBehaviour {
     [SerializeField] LineRenderer3D line;
     [SerializeField] GameObject anchorPreview;
 
-    public bool _cancelPlacement = false;
+    public bool _spatialAnchorRequested = true; //TODO: This should be false by default and be set to true when a spatial anchor is requested
+
+    Action<PoolableOVRSpatialAnchor> onAnchorSpawn;
+
+    public async UniTask<PoolableOVRSpatialAnchor> WaitNextSpatialAnchor(){
+        _spatialAnchorRequested = true;
+        PoolableOVRSpatialAnchor spawnedAnchor = null;
+        onAnchorSpawn += (spawned) => spawnedAnchor = spawned;
+        await UniTask.WaitWhile(() => spawnedAnchor == null);
+        _spatialAnchorRequested = false;
+        return spawnedAnchor;
+    }
 
     void Start(){
         HidePreview();
 
         _ovrRaycastService.SubscribeToControllerRaycastWhileTriggerHeld(OnRaycastTriggerHeld, raycastLayerMask);
         _ovrRaycastService.SubscribeToControllerRaycastWhenTriggerReleased(OnRaycastTriggerReleased, raycastLayerMask);
+        _ovrRaycastService.SubscribeToControllerRaycastCancel(OnCancel);
+    }
 
-        var cancelInputStrem = Observable
-            .EveryUpdate()
-            .Where(_ => OVRInput.GetDown(OVRInput.Button.Two))
-            .Subscribe(_ => _cancelPlacement = true);
+    void OnCancel(){
+        HidePreview();
     }
 
     void OnRaycastTriggerReleased(OVRRaycastEvent e){
-        if(_cancelPlacement || e.raycastHit == null) {
-            HidePreview();
-            _cancelPlacement = false;
+        if(!_spatialAnchorRequested || e.raycastHit == null) {
             return;
         }
 
@@ -40,13 +50,12 @@ public class SpatialAnchorPlacementController : MonoBehaviour {
         var hitPoint = e.raycastHit?.point;
         anchor.transform.position = (Vector3)hitPoint;
 
+        onAnchorSpawn?.Invoke(anchor);
         HidePreview();
-        _cancelPlacement = false;
     }
 
     void OnRaycastTriggerHeld(OVRRaycastEvent e){
-        if(_cancelPlacement || e.raycastHit == null){
-            HidePreview();
+        if(!_spatialAnchorRequested || e.raycastHit == null){
             return;
         }
 
