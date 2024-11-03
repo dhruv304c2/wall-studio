@@ -6,6 +6,7 @@ namespace XR.Input{
 public class OVRRaycastService : IOVRRaycastService{
     float _maxRayDistance;
     bool _canceled = false;
+    bool _cancellationRequested = false;
 
     public OVRRaycastService(float maxRayDistance){
         _maxRayDistance = maxRayDistance;
@@ -13,13 +14,26 @@ public class OVRRaycastService : IOVRRaycastService{
         Observable
             .EveryUpdate()
             .Where(_ => OVRInput.GetDown(OVRInput.Button.Two))
-            .Subscribe(_ => _canceled  = true);
+            .Subscribe(_ => CancelRaycast());
+
+        Observable
+            .EveryUpdate()
+            .Where(_ => _cancellationRequested)
+            .Subscribe(_ => {
+                _canceled  = true;
+                _cancellationRequested = false;
+                Debug.Log("Controller Raycast cancelled");
+            });
+    }
+
+    public void CancelRaycast(){
+        _cancellationRequested = true;
     }
 
     public void SubscribeToControllerRaycastCancel(Action listener){
         Observable
             .EveryUpdate()
-            .Where(_ => OVRInput.GetDown(OVRInput.Button.Two))
+            .Where(_ => _cancellationRequested) 
             .Subscribe(_ => listener.Invoke());
     }
 

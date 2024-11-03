@@ -1,41 +1,57 @@
 using UnityEngine;
-using Zenject;
 using XR.Input;
 using Cysharp.Threading.Tasks;
 using System;
+using System.Threading;
 
 namespace XR.SpatialAnchors{
-public class SpatialAnchorPlacementController : MonoBehaviour, ISpatialAnchorPlacementController {
-    [Inject] PoolableOVRSpatialAnchor.Pool _spatialAnchorPool;
-    [Inject] IOVRRaycastService _ovrRaycastService;
+public class SpatialAnchorPlacementController : ISpatialAnchorPlacementController {
+    PoolableOVRSpatialAnchor.Pool _spatialAnchorPool;
+    IOVRRaycastService _ovrRaycastService;
 
-    [SerializeField] LayerMask raycastLayerMask;
-    [SerializeField] LineRenderer3D line;
-    [SerializeField] GameObject anchorPreview;
+    LayerMask _raycastLayerMask;
+    LineRenderer3D _line;
+    GameObject _previewObj;
 
-    public bool _spatialAnchorRequested = true; //TODO: This should be false by default and be set to true when a spatial anchor is requested
+    public bool _spatialAnchorRequested = false;
+    bool _canceled;
 
     Action<PoolableOVRSpatialAnchor> onAnchorSpawn;
 
-    public async UniTask<PoolableOVRSpatialAnchor> WaitNextSpatialAnchor(){
+    public async UniTask<PoolableOVRSpatialAnchor> RequestSpatialAnchorUserAsync (CancellationToken token = new()){
         _spatialAnchorRequested = true;
         PoolableOVRSpatialAnchor spawnedAnchor = null;
         onAnchorSpawn += (spawned) => spawnedAnchor = spawned;
-        await UniTask.WaitWhile(() => spawnedAnchor == null);
+        await UniTask.WaitWhile(() => spawnedAnchor == null || _canceled || token.IsCancellationRequested);
         _spatialAnchorRequested = false;
+        _canceled = false;
         return spawnedAnchor;
     }
 
-    void Start(){
+    public SpatialAnchorPlacementController(
+                IOVRRaycastService ovrRaycastService, 
+                PoolableOVRSpatialAnchor.Pool spatialAnchorPool,
+                LayerMask raycastLayerMask,
+                GameObject previewObj = null,
+                LineRenderer3D line = null
+            ){
+
+        _ovrRaycastService = ovrRaycastService;
+        _spatialAnchorPool = spatialAnchorPool;
+        _raycastLayerMask = raycastLayerMask;
+        _line = line;
+        _previewObj = previewObj;
+
         HidePreview();
 
-        _ovrRaycastService.SubscribeToControllerRaycastWhileTriggerHeld(OnRaycastTriggerHeld, raycastLayerMask);
-        _ovrRaycastService.SubscribeToControllerRaycastWhenTriggerReleased(OnRaycastTriggerReleased, raycastLayerMask);
+        _ovrRaycastService.SubscribeToControllerRaycastWhileTriggerHeld(OnRaycastTriggerHeld, _raycastLayerMask);
+        _ovrRaycastService.SubscribeToControllerRaycastWhenTriggerReleased(OnRaycastTriggerReleased, _raycastLayerMask);
         _ovrRaycastService.SubscribeToControllerRaycastCancel(OnCancel);
     }
 
     void OnCancel(){
         HidePreview();
+        _canceled = true;
     }
 
     void OnRaycastTriggerReleased(OVRRaycastEvent e){
@@ -59,19 +75,19 @@ public class SpatialAnchorPlacementController : MonoBehaviour, ISpatialAnchorPla
             return;
         }
 
-        line.UpdateLine(e.controllerPosition, (Vector3) e.raycastHit?.point);
-        anchorPreview.transform.position = (Vector3) e.raycastHit?.point;
+        if(_line) _line.UpdateLine(e.controllerPosition, (Vector3) e.raycastHit?.point);
+        if(_previewObj) _previewObj.transform.position = (Vector3) e.raycastHit?.point;
         ShowPreview();
     }
 
     void ShowPreview(){
-        line.Show();
-        anchorPreview.SetActive(true);
+        if(_line) _line.Show();
+        if(_previewObj) _previewObj.SetActive(true);
     }
 
     void HidePreview(){
-        line.Hide();
-        anchorPreview.SetActive(false);
+        if(_line) _line.Hide();
+        if(_previewObj) _previewObj.SetActive(false);
     }
 }
 }
