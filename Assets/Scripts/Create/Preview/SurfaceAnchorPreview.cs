@@ -13,6 +13,8 @@ public class SurfaceAnchorPreview : MonoBehaviour, IPoolable<IMemoryPool> {
 
         public void OnDespawned(){
 		gameObject.SetActive(false);
+		_connectedEdgePoint = null;
+		_connectedBasePoint = null;
         }
 
         public void OnSpawned(IMemoryPool pool){
@@ -36,9 +38,7 @@ public class SurfaceAnchorPreview : MonoBehaviour, IPoolable<IMemoryPool> {
 		if(_connectedEdgePoint == null){
 			edgeLine.enabled = false;
 		} else{
-			edgeLine.enabled = true;
-			edgeLine.positionCount = 0;
-			if(_connectedEdgePoint) edgeLine.positionCount++;
+			edgeLine.positionCount = 2;
 			edgeLine.enabled = true;
 			edgeLine.SetPosition(1, transform.position);
 			edgeLine.SetPosition(0, _connectedEdgePoint.position);
@@ -47,9 +47,7 @@ public class SurfaceAnchorPreview : MonoBehaviour, IPoolable<IMemoryPool> {
 		if(_connectedBasePoint == null){
 			surfaceLine.enabled = false;	
 		} else {
-			surfaceLine.enabled = true;
-			surfaceLine.positionCount = 0;
-			if(_connectedBasePoint) surfaceLine.positionCount++;
+			surfaceLine.positionCount = 2;
 			surfaceLine.enabled = true;
 			surfaceLine.SetPosition(1, transform.position);
 			surfaceLine.SetPosition(0, _connectedBasePoint.position);
@@ -58,6 +56,17 @@ public class SurfaceAnchorPreview : MonoBehaviour, IPoolable<IMemoryPool> {
 	}
 
 	public class Pool : MemoryPool<SurfaceAnchorPreview>{
+		protected override void OnCreated(SurfaceAnchorPreview item){
+			item.OnDespawned();	
+		}
+
+		protected override void OnDespawned(SurfaceAnchorPreview item){
+			item.OnDespawned();
+		}
+		
+		protected override void OnSpawned(SurfaceAnchorPreview item){
+			item.OnSpawned(this);
+		}
 	}
 }
 }

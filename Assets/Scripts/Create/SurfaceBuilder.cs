@@ -8,13 +8,14 @@ using Create.Preview;
 using Zenject;
 using UniRx;
 using ModestTree;
+using System.Threading;
 
 namespace Create{
 public class SurfaceBuilder : MonoBehaviour {	
 	[Inject] IOVRRaycastService _raycastService;
 	[Inject] PoolableOVRSpatialAnchor.Pool _spatialAnchorPool;
 	[Inject] SurfaceAnchorPreview.Pool _anchorPreviewPool;
-	[Inject] PoolabeSurfaceLineRenderer.Pool _surfaceLinePreviewPool;
+	[Inject] PoolableSurfaceLineRenderer.Pool _surfaceLinePreviewPool;
 
 	[Header("Vertical Surface Refs")]
 	[SerializeField] LineRenderer3D aimLine;
@@ -25,11 +26,13 @@ public class SurfaceBuilder : MonoBehaviour {
 
 	void Start(){
 		HidePreview();
-		RequestVerticalSurface(10); //TODO: Remove Debug method call
+		RequestVerticalSurfaces(10); //TODO: Remove Debug method call
 	}
 
-	public void RequestVerticalSurface(int pointLimit = 2){
-		RequestVerticalSurfaceFromUserAsync(pointLimit).Forget();
+	public async void RequestVerticalSurfaces(int pointLimit = 2){
+		while(true){
+			await RequestVerticalSurfaceFromUserAsync(pointLimit);
+		}
 	}
 
 	public async UniTask RequestVerticalSurfaceFromUserAsync(int pointLimit = 2){
@@ -47,17 +50,21 @@ public class SurfaceBuilder : MonoBehaviour {
 
 		List<PoolableOVRSpatialAnchor> baseEdgeAnchors = new();
 		outlineRenderer.lineRenderer.positionCount = 0;
-		bool outlineConfirmed = false;
-
+		
+		var placementCTS = new CancellationTokenSource();
 		Observable
 			.EveryUpdate()
-			.Where(_ => OVRInput.GetDown(OVRInput.Button.Two))
-			.Subscribe(_ => outlineConfirmed = true);
+			.TakeWhile(_ => !placementCTS.IsCancellationRequested)
+			.Where(_ => OVRInput.GetDown(OVRInput.Button.One))
+			.Subscribe(_ => {
+				placementCTS.Cancel(); //anchor placement sequence must be canceled if user confirms base outline
+				placementCTS.Dispose();
+			});
 		
 
-		for(int i = 0; i < pointLimit && !outlineConfirmed;){
+		for(int i = 0; i < pointLimit && !placementCTS.IsCancellationRequested;){
 			if(baseEdgeAnchors.Count != 0) aimPreview.SetConnectedEdgeTransform(baseEdgeAnchors.Last().transform);
-			var anchor  = await anchorPlacementController.RequestSpatialAnchorUserAsync();	
+			var anchor  = await anchorPlacementController.RequestSpatialAnchorUserAsync(placementCTS.Token);	
 
 			if(anchor == null) continue;
 
@@ -68,33 +75,36 @@ public class SurfaceBuilder : MonoBehaviour {
 			outlineRenderer.lineRenderer.SetPosition(outlineRenderer.lineRenderer.positionCount - 1, anchor.transform.position);
 		}
 
+		await UniTask.WaitUntil(() => placementCTS.IsCancellationRequested);
+
 		var surface = new VertSurface(baseEdgeAnchors, extrusionPerStep);
 		var preview = new VertSurfacePreview(surface, _anchorPreviewPool);
-		
+	
 		preview.UpdatePreview();
 
+		bool heightConfirmed = false;
+
 		Observable
 			.EveryUpdate()
-			.Where(_ => {
-				var axis = OVRInput.Get(OVRInput.Axis2D.SecondaryThumbstick);
-				return axis.y > 0.1f;
-			})
-			.Subscribe(_ => {
-				surface.Extrude(extrusionPerStep);
-				preview.UpdatePreview();
-			});
+			.TakeWhile(_ => !heightConfirmed)
+			.Where(_ => OVRInput.GetDown(OVRInput.Button.One))
+			.Subscribe(_ => heightConfirmed = true);
 
 		Observable
 			.EveryUpdate()
 			.Where(_ => {
 				var axis = OVRInput.Get(OVRInput.Axis2D.SecondaryThumbstick);
-				return axis.y < -0.1f;
+				return axis.y > 0.1f || axis.y < -0.1f;
 			})
+			.TakeWhile(_ => !heightConfirmed)
 			.Subscribe(_ => {
-				surface.Extrude(-extrusionPerStep);
+				var axis = OVRInput.Get(OVRInput.Axis2D.SecondaryThumbstick);
+				surface.Extrude(extrusionPerStep * axis.y);
 				preview.UpdatePreview();
 			});
+	
 
+		await UniTask.WaitUntil(() => heightConfirmed);
 
 		aimPreview.Despawn();
 		outlineRenderer.Despawn();
@@ -109,6 +119,8 @@ public class VertSurfacePreview{
 	VertSurface _surface;
 	SurfaceAnchorPreview.Pool _surfaceAnchorPool;
 	
+	public VertSurface Surface => _surface;
+
 	public VertSurfacePreview(
 		VertSurface surface,
 		SurfaceAnchorPreview.Pool surfaceAnchorPool
@@ -148,6 +160,9 @@ public class VertSurfacePreview{
 	public void Dispose(){
 		_baseEdgePreview.ForEach((p) => p.Despawn());
 		_topEdgePrewView.ForEach((p) => p.Despawn());
+
+		_baseEdgePreview = new();
+		_topEdgePrewView = new();
 	}
 }
 

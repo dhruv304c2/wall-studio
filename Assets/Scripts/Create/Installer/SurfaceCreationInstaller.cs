@@ -10,7 +10,7 @@ public class SurfaceCreationInstaller : MonoInstaller<SurfaceCreationInstaller> 
 
     [Header("Surface line preview")]
     [SerializeField] int intitialSurfaceLinePoolSize;
-    [SerializeField] PoolabeSurfaceLineRenderer surfaceLinePrefab;
+    [SerializeField] PoolableSurfaceLineRenderer surfaceLinePrefab;
 
     public override void InstallBindings(){
 	Container.BindMemoryPool<SurfaceAnchorPreview, SurfaceAnchorPreview.Pool>()
@@ -19,7 +19,7 @@ public class SurfaceCreationInstaller : MonoInstaller<SurfaceCreationInstaller> 
 	    .UnderTransformGroup("SurfaceAnchorPreviewPool")
 	    .Lazy();
 
-	Container.BindMemoryPool<PoolabeSurfaceLineRenderer, PoolabeSurfaceLineRenderer.Pool>()
+	Container.BindMemoryPool<PoolableSurfaceLineRenderer, PoolableSurfaceLineRenderer.Pool>()
 	    .WithInitialSize(intitialSurfaceLinePoolSize)
 	    .FromComponentInNewPrefab(surfaceLinePrefab)
 	    .UnderTransformGroup("SurfaceLinePreviewPool")

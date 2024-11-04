@@ -22,7 +22,7 @@ public class SpatialAnchorPlacementController : ISpatialAnchorPlacementControlle
         _spatialAnchorRequested = true;
         PoolableOVRSpatialAnchor spawnedAnchor = null;
         onAnchorSpawn += (spawned) => spawnedAnchor = spawned;
-        await UniTask.WaitWhile(() => spawnedAnchor == null || _canceled || token.IsCancellationRequested);
+        await UniTask.WaitUntil(() => spawnedAnchor != null || _canceled || token.IsCancellationRequested);
         _spatialAnchorRequested = false;
         _canceled = false;
         return spawnedAnchor;
