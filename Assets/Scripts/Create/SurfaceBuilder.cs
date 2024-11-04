@@ -25,16 +25,15 @@ public class SurfaceBuilder : MonoBehaviour {
 
 	void Start(){
 		HidePreview();
-		RequestVerticalSurface(); //TODO: Remove Debug method call
+		RequestVerticalSurface(10); //TODO: Remove Debug method call
 	}
 
-	public void RequestVerticalSurface(){
-		RequestVerticalSurfaceFromUserAsync().Forget();
+	public void RequestVerticalSurface(int pointLimit = 2){
+		RequestVerticalSurfaceFromUserAsync(pointLimit).Forget();
 	}
 
 	public async UniTask RequestVerticalSurfaceFromUserAsync(int pointLimit = 2){
 		var aimPreview = _anchorPreviewPool.Spawn();
-
 		var outlineRenderer = _surfaceLinePreviewPool.Spawn();
 		outlineRenderer.lineRenderer.colorGradient = edgeLineColor;
 
@@ -56,9 +55,14 @@ public class SurfaceBuilder : MonoBehaviour {
 			.Subscribe(_ => outlineConfirmed = true);
 		
 
-		for(int i = 0; i < pointLimit && !outlineConfirmed; i++){
-			if(baseEdgeAnchors.Count != 0) aimPreview.SetConnectedEdgeTransform(baseEdgeAnchors[0].transform);
+		for(int i = 0; i < pointLimit && !outlineConfirmed;){
+			if(baseEdgeAnchors.Count != 0) aimPreview.SetConnectedEdgeTransform(baseEdgeAnchors.Last().transform);
 			var anchor  = await anchorPlacementController.RequestSpatialAnchorUserAsync();	
+
+			if(anchor == null) continue;
+
+			//Increment only if a non null anchor is returned
+			i++;
 			baseEdgeAnchors.Add(anchor);
 			outlineRenderer.lineRenderer.positionCount++;
 			outlineRenderer.lineRenderer.SetPosition(outlineRenderer.lineRenderer.positionCount - 1, anchor.transform.position);
@@ -71,7 +75,10 @@ public class SurfaceBuilder : MonoBehaviour {
 
 		Observable
 			.EveryUpdate()
-			.Where(_ => OVRInput.GetDown(OVRInput.Button.PrimaryThumbstickUp))
+			.Where(_ => {
+				var axis = OVRInput.Get(OVRInput.Axis2D.SecondaryThumbstick);
+				return axis.y > 0.1f;
+			})
 			.Subscribe(_ => {
 				surface.Extrude(extrusionPerStep);
 				preview.UpdatePreview();
@@ -79,7 +86,10 @@ public class SurfaceBuilder : MonoBehaviour {
 
 		Observable
 			.EveryUpdate()
-			.Where(_ => OVRInput.GetDown(OVRInput.Button.PrimaryThumbstickDown))
+			.Where(_ => {
+				var axis = OVRInput.Get(OVRInput.Axis2D.SecondaryThumbstick);
+				return axis.y < -0.1f;
+			})
 			.Subscribe(_ => {
 				surface.Extrude(-extrusionPerStep);
 				preview.UpdatePreview();
@@ -88,10 +98,6 @@ public class SurfaceBuilder : MonoBehaviour {
 
 		aimPreview.Despawn();
 		outlineRenderer.Despawn();
-	}
-
-	void UpdateTopEdgePreview(VertSurface surface){
-			
 	}
 
 	void HidePreview(){

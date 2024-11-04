@@ -36,6 +36,7 @@ public class SurfaceAnchorPreview : MonoBehaviour, IPoolable<IMemoryPool> {
 		if(_connectedEdgePoint == null){
 			edgeLine.enabled = false;
 		} else{
+			edgeLine.enabled = true;
 			edgeLine.positionCount = 0;
 			if(_connectedEdgePoint) edgeLine.positionCount++;
 			edgeLine.enabled = true;
@@ -46,6 +47,7 @@ public class SurfaceAnchorPreview : MonoBehaviour, IPoolable<IMemoryPool> {
 		if(_connectedBasePoint == null){
 			surfaceLine.enabled = false;	
 		} else {
+			surfaceLine.enabled = true;
 			surfaceLine.positionCount = 0;
 			if(_connectedBasePoint) surfaceLine.positionCount++;
 			surfaceLine.enabled = true;
