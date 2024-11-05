@@ -30,5 +30,17 @@ public class PoolableOVRSpatialAnchor : MonoBehaviour, IPoolable<IMemoryPool> {
     }
 
     public class Pool : MemoryPool<PoolableOVRSpatialAnchor>{ 
+        protected override void OnCreated(PoolableOVRSpatialAnchor item){
+                item.OnDespawned();	
+        }
+
+        protected override void OnDespawned(PoolableOVRSpatialAnchor item){
+                item.OnDespawned();
+        }
+
+        protected override void OnSpawned(PoolableOVRSpatialAnchor item){
+                item.OnSpawned(this);
+        }
+
     }
 }}
