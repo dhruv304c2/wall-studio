@@ -2,7 +2,7 @@ using UnityEngine;
 using Zenject;
 
 namespace Create.Preview{
-public class SurfaceAnchorPreview : MonoBehaviour, IPoolable<IMemoryPool> {
+public class SurfaceAnchorVisualizer : MonoBehaviour, IPoolable<IMemoryPool> {
 	[SerializeField] LineRenderer edgeLine;
 	[SerializeField] LineRenderer surfaceLine;
 
@@ -30,6 +30,14 @@ public class SurfaceAnchorPreview : MonoBehaviour, IPoolable<IMemoryPool> {
 		_connectedBasePoint = transform;	
 	}
 
+	public void Show(){
+		gameObject.SetActive(true);
+	}
+
+	public void Hide(){
+		gameObject.SetActive(false);
+	}
+
 	public void Despawn(){
 		_pool.Despawn(this);
 	}
@@ -55,16 +63,16 @@ public class SurfaceAnchorPreview : MonoBehaviour, IPoolable<IMemoryPool> {
 
 	}
 
-	public class Pool : MemoryPool<SurfaceAnchorPreview>{
-		protected override void OnCreated(SurfaceAnchorPreview item){
+	public class Pool : MemoryPool<SurfaceAnchorVisualizer>{
+		protected override void OnCreated(SurfaceAnchorVisualizer item){
 			item.OnDespawned();	
 		}
 
-		protected override void OnDespawned(SurfaceAnchorPreview item){
+		protected override void OnDespawned(SurfaceAnchorVisualizer item){
 			item.OnDespawned();
 		}
 		
-		protected override void OnSpawned(SurfaceAnchorPreview item){
+		protected override void OnSpawned(SurfaceAnchorVisualizer item){
 			item.OnSpawned(this);
 		}
 	}

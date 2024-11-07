@@ -7,14 +7,13 @@ using XR.Input;
 using Create.Preview;
 using Zenject;
 using UniRx;
-using ModestTree;
 using System.Threading;
 
-namespace Create{
+namespace Create.Surface {
 public class SurfaceBuilder : MonoBehaviour {	
 	[Inject] IOVRRaycastService _raycastService;
 	[Inject] PoolableOVRSpatialAnchor.Pool _spatialAnchorPool;
-	[Inject] SurfaceAnchorPreview.Pool _anchorPreviewPool;
+	[Inject] SurfaceAnchorVisualizer.Pool _anchorPreviewPool;
 	[Inject] PoolableSurfaceLineRenderer.Pool _surfaceLinePreviewPool;
 
 	[Header("Vertical Surface Refs")]
@@ -23,10 +22,12 @@ public class SurfaceBuilder : MonoBehaviour {
 	[SerializeField] Gradient edgeLineColor;
 	[SerializeField] float extrusionPerStep;
 
+	public List<VertSurfaceController> _activeSurfaces;
 
 	void Start(){
 		HidePreview();
 		RequestVerticalSurfaces(10); //TODO: Remove Debug method call
+		_activeSurfaces = new();
 	}
 
 	public async void RequestVerticalSurfaces(int pointLimit = 2){
@@ -78,9 +79,14 @@ public class SurfaceBuilder : MonoBehaviour {
 		await UniTask.WaitUntil(() => placementCTS.IsCancellationRequested);
 
 		var surface = new VertSurface(baseEdgeAnchors, extrusionPerStep);
-		var preview = new VertSurfacePreview(surface, _anchorPreviewPool);
+		var visualizer = new VertSurfaceVisualizer(surface, _anchorPreviewPool);
+		
+		var minHeight = 0.1f;
+		var maxHeight = 20f;
+
+		var surfaceController = new VertSurfaceController(surface, visualizer, minHeight, maxHeight);
 	
-		preview.UpdatePreview();
+		visualizer.Update();
 
 		bool heightConfirmed = false;
 
@@ -90,6 +96,7 @@ public class SurfaceBuilder : MonoBehaviour {
 			.Where(_ => OVRInput.GetDown(OVRInput.Button.One))
 			.Subscribe(_ => heightConfirmed = true);
 
+		
 		Observable
 			.EveryUpdate()
 			.Where(_ => {
@@ -99,12 +106,13 @@ public class SurfaceBuilder : MonoBehaviour {
 			.TakeWhile(_ => !heightConfirmed)
 			.Subscribe(_ => {
 				var axis = OVRInput.Get(OVRInput.Axis2D.SecondaryThumbstick);
-				surface.Extrude(extrusionPerStep * axis.y);
-				preview.UpdatePreview();
+				surfaceController.Extrude(extrusionPerStep * axis.y);
 			});
 	
 
 		await UniTask.WaitUntil(() => heightConfirmed);
+
+		_activeSurfaces.Add(surfaceController);
 
 		aimPreview.Despawn();
 		outlineRenderer.Despawn();
@@ -112,93 +120,6 @@ public class SurfaceBuilder : MonoBehaviour {
 
 	void HidePreview(){
 		aimLine.Hide();
-	}
-}
-
-public class VertSurfacePreview{
-	VertSurface _surface;
-	SurfaceAnchorPreview.Pool _surfaceAnchorPool;
-	
-	public VertSurface Surface => _surface;
-
-	public VertSurfacePreview(
-		VertSurface surface,
-		SurfaceAnchorPreview.Pool surfaceAnchorPool
-		){
-
-		_surface = surface;
-		_surfaceAnchorPool = surfaceAnchorPool;
-	}
-
-	List<SurfaceAnchorPreview> _baseEdgePreview = new();
-	List<SurfaceAnchorPreview> _topEdgePrewView = new();
-
-	public void UpdatePreview(){
-		//Dispose old preview
-		Dispose();
-
-		//Create base edge preview
-		foreach(var p in _surface.GetBaseEdge()){
-			var a = _surfaceAnchorPool.Spawn();
-			a.transform.position = p;
-			if(!_baseEdgePreview.IsEmpty()) a.SetConnectedEdgeTransform(_baseEdgePreview.Last().transform);
-			_baseEdgePreview.Add(a);
-		}
-
-		//Create top edge preview
-		int idx = 0;
-		foreach(var p in _surface.GetTopEdge()){
-			var a = _surfaceAnchorPool.Spawn();
-			a.transform.position = p;
-			if(!_topEdgePrewView.IsEmpty()) a.SetConnectedEdgeTransform(_topEdgePrewView.Last().transform);
-			a.SetConnectedBasePointTransform(_baseEdgePreview[idx].transform);
-			_topEdgePrewView.Add(a);
-			idx++;
-		}
-	}
-
-	public void Dispose(){
-		_baseEdgePreview.ForEach((p) => p.Despawn());
-		_topEdgePrewView.ForEach((p) => p.Despawn());
-
-		_baseEdgePreview = new();
-		_topEdgePrewView = new();
-	}
-}
-
-public class VertSurface{
-	public List<PoolableOVRSpatialAnchor> baseEdge = new();
-	public float height; 
-
-	public VertSurface(List<PoolableOVRSpatialAnchor> baseEdge, float height){
-		this.baseEdge = baseEdge;
-		this.height = height;
-	}
-
-	public void SetHeight(float height){
-		this.height = height;
-	}
-
-	public void Extrude(float y){
-		height += y;
-	}
-
-	public List<Vector3> GetBaseEdge(){
-		return baseEdge.Select((p) => p.transform.position).ToList();
-
-	}
-
-	public List<Vector3> GetTopEdge(){
-		return baseEdge.Select((p) => 
-				new Vector3(
-					p.transform.position.x,
-					p.transform.position.y + height,
-					p.transform.position.z)).ToList();
-	}
-
-	public void Dispose(){
-		baseEdge.ForEach((p) => p.Despawn());
-		baseEdge = new();
 	}
 }
 }

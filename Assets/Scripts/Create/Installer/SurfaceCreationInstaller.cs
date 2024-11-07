@@ -6,14 +6,14 @@ namespace Create{
 public class SurfaceCreationInstaller : MonoInstaller<SurfaceCreationInstaller> {
     [Header("Surface anchor preview")] 
     [SerializeField] int intiialSurfacePreviewPoolSize;
-    [SerializeField] SurfaceAnchorPreview anchorPreviewPrefab;
+    [SerializeField] SurfaceAnchorVisualizer anchorPreviewPrefab;
 
     [Header("Surface line preview")]
     [SerializeField] int intitialSurfaceLinePoolSize;
     [SerializeField] PoolableSurfaceLineRenderer surfaceLinePrefab;
 
     public override void InstallBindings(){
-	Container.BindMemoryPool<SurfaceAnchorPreview, SurfaceAnchorPreview.Pool>()
+	Container.BindMemoryPool<SurfaceAnchorVisualizer, SurfaceAnchorVisualizer.Pool>()
 	    .WithInitialSize(intiialSurfacePreviewPoolSize)
 	    .FromComponentInNewPrefab(anchorPreviewPrefab)
 	    .UnderTransformGroup("SurfaceAnchorPreviewPool")
