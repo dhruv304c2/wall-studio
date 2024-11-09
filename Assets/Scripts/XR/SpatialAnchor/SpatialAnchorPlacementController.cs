@@ -25,6 +25,7 @@ public class SpatialAnchorPlacementController : ISpatialAnchorPlacementControlle
         await UniTask.WaitUntil(() => spawnedAnchor != null || _canceled || token.IsCancellationRequested);
         _spatialAnchorRequested = false;
         _canceled = false;
+        HidePreview();
         return spawnedAnchor;
     }
 

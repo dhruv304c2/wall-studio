@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Create.Preview;
 using ModestTree;
+using UnityEngine;
 
 namespace Create.Surface{
 public class VertSurfaceVisualizer{
@@ -45,7 +46,7 @@ public class VertSurfaceVisualizer{
 			idx++;
 		}
 	}
-
+	
 	public void Show(){
 		_baseEdgeVisual.ForEach((p) => p.Show());
 		_topEdgeVisual.ForEach((p) => p.Show());

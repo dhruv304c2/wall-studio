@@ -36,7 +36,14 @@ public class SurfaceBuilder : MonoBehaviour {
 		}
 	}
 
-	public async UniTask RequestVerticalSurfaceFromUserAsync(int pointLimit = 2){
+	public async UniTask<VertSurfaceController> RequestVerticalSurfaceFromUserAsync(int pointLimit = 2){
+		var baseEdgeAnchors = await RequestBaseEdge(pointLimit);
+		var vertSurface = await RequestVertSurfaceFromBaseEdge(baseEdgeAnchors);
+		_activeSurfaces.Add(vertSurface);
+		return vertSurface;
+	}		
+
+	async UniTask<List<PoolableOVRSpatialAnchor>> RequestBaseEdge(int pointLimit = 2){
 		var aimPreview = _anchorPreviewPool.Spawn();
 		var outlineRenderer = _surfaceLinePreviewPool.Spawn();
 		outlineRenderer.lineRenderer.colorGradient = edgeLineColor;
@@ -53,6 +60,7 @@ public class SurfaceBuilder : MonoBehaviour {
 		outlineRenderer.lineRenderer.positionCount = 0;
 		
 		var placementCTS = new CancellationTokenSource();
+
 		Observable
 			.EveryUpdate()
 			.TakeWhile(_ => !placementCTS.IsCancellationRequested)
@@ -77,7 +85,13 @@ public class SurfaceBuilder : MonoBehaviour {
 		}
 
 		await UniTask.WaitUntil(() => placementCTS.IsCancellationRequested);
+		aimPreview.Despawn();
+		outlineRenderer.Despawn();
+		
+		return baseEdgeAnchors;
+	}
 
+	async UniTask<VertSurfaceController> RequestVertSurfaceFromBaseEdge(List<PoolableOVRSpatialAnchor> baseEdgeAnchors){
 		var surface = new VertSurface(baseEdgeAnchors, extrusionPerStep);
 		var visualizer = new VertSurfaceVisualizer(surface, _anchorPreviewPool);
 		
@@ -111,11 +125,8 @@ public class SurfaceBuilder : MonoBehaviour {
 	
 
 		await UniTask.WaitUntil(() => heightConfirmed);
-
-		_activeSurfaces.Add(surfaceController);
-
-		aimPreview.Despawn();
-		outlineRenderer.Despawn();
+		surfaceController.CreateCollider();
+		return surfaceController;
 	}
 
 	void HidePreview(){
