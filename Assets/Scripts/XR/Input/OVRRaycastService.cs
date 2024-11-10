@@ -44,32 +44,32 @@ public class OVRRaycastService : IOVRRaycastService{
             .Where(_ => OVRInput.Get(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.RTouch)) 
             .Subscribe(_ => CheckAndEmitRaycastEvent(listener, raycastLayerMask, OVRInput.Controller.RTouch));
 
-        Observable
-            .EveryUpdate()
-            .SkipWhile(_ => _canceled)
-            .Where(_ => OVRInput.Get(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.LTouch))
-            .Subscribe(_ => CheckAndEmitRaycastEvent(listener, raycastLayerMask, OVRInput.Controller.LTouch));
+        // Observable
+        //     .EveryUpdate()
+        //     .SkipWhile(_ => _canceled)
+        //     .Where(_ => OVRInput.Get(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.LTouch))
+        //     .Subscribe(_ => CheckAndEmitRaycastEvent(listener, raycastLayerMask, OVRInput.Controller.LTouch));
     }
 
 
     public void SubscribeToControllerRaycastWhenTriggerReleased(Action<OVRRaycastEvent> listener, LayerMask raycastLayerMask){
         Observable
             .EveryUpdate()
-            .SkipWhile(_ => OVRInput.Get(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.LTouch)) //Ignoring frames when left trigger is still held
+//            .SkipWhile(_ => OVRInput.Get(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.LTouch)) //Ignoring frames when left trigger is still held
             .Where(_ => OVRInput.GetUp(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.RTouch))
             .Subscribe(_ => {
                 if(!_canceled) CheckAndEmitRaycastEvent(listener, raycastLayerMask, OVRInput.Controller.RTouch);
                 _canceled = false;
             });
 
-        Observable
-            .EveryUpdate()
-            .SkipWhile(_ => OVRInput.Get(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.RTouch)) //Ignoring frames when right trigger is still held
-            .Where(_ => OVRInput.GetUp(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.LTouch))
-            .Subscribe(_ => {
-                if(!_canceled) CheckAndEmitRaycastEvent(listener, raycastLayerMask, OVRInput.Controller.LTouch);
-                _canceled = false;
-            });
+        // Observable
+        //     .EveryUpdate()
+        //     .SkipWhile(_ => OVRInput.Get(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.RTouch)) //Ignoring frames when right trigger is still held
+        //     .Where(_ => OVRInput.GetUp(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.LTouch))
+        //     .Subscribe(_ => {
+        //         if(!_canceled) CheckAndEmitRaycastEvent(listener, raycastLayerMask, OVRInput.Controller.LTouch);
+        //         _canceled = false;
+        //     });
     }
 
 
