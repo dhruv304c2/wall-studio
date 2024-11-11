@@ -30,7 +30,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.06, y: 0.06, z: 0.06}
+  m_LocalScale: {x: 0.02, y: 0.02, z: 0.02}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4365512745367363586}
@@ -206,8 +206,8 @@ LineRenderer:
       serializedVersion: 2
       m_Curve:
       - serializedVersion: 3
-        time: 0
-        value: 0.22413826
+        time: 0.0015335083
+        value: 0.050920486
         inSlope: 0
         outSlope: 0
         tangentMode: 0
@@ -342,8 +342,8 @@ LineRenderer:
       serializedVersion: 2
       m_Curve:
       - serializedVersion: 3
-        time: 0
-        value: 0.22413826
+        time: 0.00920105
+        value: 0.050920486
         inSlope: 0
         outSlope: 0
         tangentMode: 0
