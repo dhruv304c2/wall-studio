@@ -147,7 +147,7 @@ public class SurfaceBuilder : MonoBehaviour, ISurfaceBuilder {
 		var placementCTS = new CancellationTokenSource();
 
 		var posPrompt = CreatePostionPrompt(aimPreview.transform, _ => !placementCTS.IsCancellationRequested);
-		var releasePrompt = CreateReleasePrompt(_ => !placementCTS.IsCancellationRequested);
+//		var releasePrompt = CreateReleasePrompt(_ => !placementCTS.IsCancellationRequested);
 		var holdPrompt = CreateHoldPrompt(_ => !placementCTS.IsCancellationRequested);
 
 
@@ -178,7 +178,7 @@ public class SurfaceBuilder : MonoBehaviour, ISurfaceBuilder {
 		aimPreview.Despawn();
 		outlineRenderer.Despawn();
 		posPrompt.Dispose();
-		releasePrompt.Dispose();
+//		releasePrompt.Dispose();
 		holdPrompt.Dispose();
 		
 		return baseEdgeAnchors;

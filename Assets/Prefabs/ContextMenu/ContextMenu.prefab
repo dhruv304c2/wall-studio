@@ -32,7 +32,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -548.4, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1058673171699342654
@@ -277,7 +277,7 @@ MonoBehaviour:
   contentRoot: {fileID: 2797642614166849803}
   trackSpeed: 5
   maxDistance: 7
-  offset: {x: 0.35, y: 0.1, z: -0.05}
+  offset: {x: 0.1, y: 0.1, z: 0}
   opacity: 0.85
 --- !u!114 &-689727422869866771
 MonoBehaviour:
@@ -292,6 +292,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetCamera: {fileID: 0}
+  maintainAngleOfVision: 1
+  angleOfVision: 15
 --- !u!210 &8732309904476254464
 SortingGroup:
   m_ObjectHideFlags: 0
@@ -339,7 +341,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 550, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2054169107910462758
